@@ -1,0 +1,11 @@
+.gradle
+.DS_Store
+/captures
+.idea
+app/build
+build
+gradle
+local.properties
+MyMqtt.iml
+app/app.iml
+app/proguard-rules.pro
