@@ -3,6 +3,7 @@
     package="com.gz.mymqtt" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,11 +18,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
-            android:name=".ReceiveService"
+            android:name=".MqttService"
             android:enabled="true"
             android:exported="true" >
         </service>
+
+        <receiver
+            android:name=".MqttReconnectReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter android:priority="100">
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.DATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
