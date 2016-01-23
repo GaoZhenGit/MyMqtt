@@ -2,7 +2,6 @@ package com.gz.mymqtt;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,9 +33,9 @@ public class MqttService extends Service implements MqttSimpleCallback {
     private static MqttPersistence MQTT_PERSISTENCE = null;
     // We don't need to remember any state between the connections, so we use a
     // clean start.
-    private final static boolean MQTT_CLEAN_START = true;
+    private final static boolean MQTT_CLEAN_START = false;
     // heartbeat, pre second
-    private final static short MQTT_KEEP_ALIVE = 15;
+    private final static short MQTT_KEEP_ALIVE = 60;
     //mqtt host url
     private final static String MQTT_HOST = "139.129.18.117";
     //mqtt host port, default 1883
@@ -80,7 +79,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
+        toastHandler.show("start");
         final String id = Settings.Secure.getString(this.getContentResolver(),
                 Settings.Secure.ANDROID_ID);
 
@@ -201,6 +200,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
     @Override
     public void onDestroy() {
         Toast.makeText(this, "destory", Toast.LENGTH_SHORT).show();
+        Log.i("mqtt","service destory");
         try {
             mqttClient.disconnect();
         } catch (MqttPersistenceException e) {
@@ -218,8 +218,10 @@ public class MqttService extends Service implements MqttSimpleCallback {
      */
     @Override
     public void connectionLost() throws Exception {
-        Log.e("mqtt", "connectloss" + mqttClient.isConnected());
-        reConnectDelay();
+        toastHandler.show("loss");
+        Log.e("mqtt", "connectloss" );
+        //if detected connect lost, reconnect immediately
+        onStartCommand(null, 0, 0);
     }
 
     /**
