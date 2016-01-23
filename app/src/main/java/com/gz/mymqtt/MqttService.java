@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.ibm.mqtt.IMqttClient;
@@ -20,7 +19,6 @@ import com.ibm.mqtt.MqttPersistence;
 import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -45,6 +43,8 @@ public class MqttService extends Service implements MqttSimpleCallback {
     private final static int MQTT_PORT = 1883;
     //emergency title, always subscribe
     private final static String EMERGENCY_TITLE = "emergency";
+    //the post of reconnect pre second
+    private final static int RECONNECT_DELAY = 15;
 
     //store and read subscribed title list in sharepreference
     private LocalTitles localTitles;
@@ -93,6 +93,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
                     recoverSub();
                 } catch (MqttException e) {
                     e.printStackTrace();
+                    Log.e("mqtt","connect fail");
                     //renconnect if fail
                     reConnectDelay();
                 }
@@ -132,7 +133,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
             public void run() {
                 onStartCommand(null, 0, 0);
             }
-        }, 15 * 1000);
+        }, RECONNECT_DELAY * 1000);
         Looper.loop();
     }
 
@@ -233,7 +234,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
     @Override
     public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) throws Exception {
         String s = new String(payload);
-        Log.i("message", s);
+        Log.i("message", topicName+":"+s);
         //show message in toast
         toastHandler.show(s);
         //call the implement of interface
