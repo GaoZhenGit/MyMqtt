@@ -90,7 +90,7 @@ public class MainActivity extends Activity implements MqttService.MCallback {
             @Override
             public void onClick(View v) {
                 if (receiveService != null)
-                    receiveService.sendMessage("emergency",title.getText().toString());
+                    receiveService.sendMessage("emergency",title.getText().toString(), 2);
             }
         });
     }

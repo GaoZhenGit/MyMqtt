@@ -35,7 +35,7 @@ public class HeartBeat {
             public void run() {
                 String sendTime = "" + System.currentTimeMillis();
                 HeartBeat.this.mqttService.sendMessage(
-                        HeartBeat.this.mqttService.getHeartbeatTitle(), sendTime);
+                        HeartBeat.this.mqttService.getHeartbeatTitle(), sendTime, 2);
                 Log.i("heartbeatsend", "" + sendTime);
             }
         };
@@ -57,7 +57,7 @@ public class HeartBeat {
         receiveTimer = new Timer();
         receiveTimer.schedule(heartBeatReceiver, 0, CHECK_HEART_RATE * 1000);
 
-        lastHeatBeatTime = System.currentTimeMillis() + HEARTBEAT_RATE * 1000;
+        lastHeatBeatTime = System.currentTimeMillis();
     }
 
     //renew the last record time from received heart beat, if it is

@@ -199,7 +199,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         }).start();
     }
 
-    public void sendMessage(String title, String message) {
+    public void sendMessage(String title, String message, final int qos) {
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
             return;
         }
@@ -209,7 +209,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
             @Override
             public void run() {
                 try {
-                    mqttClient.publish(t, m.getBytes(), 2, false);
+                    mqttClient.publish(t, m.getBytes(), qos, false);
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }
@@ -232,6 +232,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         Log.i("mqtt", "service destory");
         try {
             mqttClient.disconnect();
+            heartBeat.stop();
         } catch (MqttPersistenceException e) {
             e.printStackTrace();
         }
