@@ -65,4 +65,13 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="send"
+        android:id="@+id/send"
+        android:layout_below="@+id/subscribe"
+        android:layout_alignLeft="@+id/subscribe"
+        android:layout_alignStart="@+id/subscribe" />
+
 </RelativeLayout>

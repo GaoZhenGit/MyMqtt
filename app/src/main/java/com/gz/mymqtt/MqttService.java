@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.ibm.mqtt.IMqttClient;
@@ -34,14 +35,16 @@ public class MqttService extends Service implements MqttSimpleCallback {
     // We don't need to remember any state between the connections, so we use a
     // clean start.
     private final static boolean MQTT_CLEAN_START = false;
-    // heartbeat, pre second
-    private final static short MQTT_KEEP_ALIVE = 60;
+    // heartbeat, pre second, now i dont use it because i make heartbeat myself
+    private final static short MQTT_KEEP_ALIVE = 60 * 30;
     //mqtt host url
     private final static String MQTT_HOST = "139.129.18.117";
     //mqtt host port, default 1883
     private final static int MQTT_PORT = 1883;
     //emergency title, always subscribe
     private final static String EMERGENCY_TITLE = "emergency";
+    //the title of only self sub, for heartbeat, will add the device id before
+    private final static String HEARTBEAT_TITLE = "heartbeat";
     //the post of reconnect pre second
     private final static int RECONNECT_DELAY = 15;
 
@@ -55,6 +58,8 @@ public class MqttService extends Service implements MqttSimpleCallback {
     private ToastHandler toastHandler;
     //the interface of receive
     private MCallback mCallback;
+    //heartbeat util
+    private HeartBeat heartBeat;
 
 //    private MqttReconnectReceiver mqttReconnectReceiver;
 
@@ -64,6 +69,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         mBinder = new ReceiveServiceBinder();
         toastHandler = new ToastHandler();
         localTitles = new LocalTitles(getApplication());
+        heartBeat = new HeartBeat(this);
 //        mqttReconnectReceiver = new MqttReconnectReceiver();
 //
 //        IntentFilter intentFilter = new IntentFilter();
@@ -92,7 +98,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
                     recoverSub();
                 } catch (MqttException e) {
                     e.printStackTrace();
-                    Log.e("mqtt","connect fail");
+                    Log.e("mqtt", "connect fail");
                     //renconnect if fail
                     reConnectDelay();
                 }
@@ -144,7 +150,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
             Log.i("resub", st);
         }
         try {
-            mqttClient.subscribe(new String[]{EMERGENCY_TITLE}, new int[]{2});
+            mqttClient.subscribe(new String[]{EMERGENCY_TITLE,getHeartbeatTitle()}, new int[]{2,2});
             int[] qos = new int[s.length];
             for (int i = 0; i < qos.length; i++) {
                 qos[i] = 2;
@@ -193,14 +199,37 @@ public class MqttService extends Service implements MqttSimpleCallback {
         }).start();
     }
 
+    public void sendMessage(String title, String message) {
+        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
+            return;
+        }
+        final String t = title;
+        final String m = message;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mqttClient.publish(t, m.getBytes(), 2, false);
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     public void setCallback(MCallback mCallback) {
         this.mCallback = mCallback;
+    }
+
+    public String getHeartbeatTitle(){
+        return HEARTBEAT_TITLE + Settings.Secure.getString(this.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
     }
 
     @Override
     public void onDestroy() {
         Toast.makeText(this, "destory", Toast.LENGTH_SHORT).show();
-        Log.i("mqtt","service destory");
+        Log.i("mqtt", "service destory");
         try {
             mqttClient.disconnect();
         } catch (MqttPersistenceException e) {
@@ -219,7 +248,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
     @Override
     public void connectionLost() throws Exception {
         toastHandler.show("loss");
-        Log.e("mqtt", "connectloss" );
+        Log.e("mqtt", "connectloss");
         //if detected connect lost, reconnect immediately
         onStartCommand(null, 0, 0);
     }
@@ -236,7 +265,11 @@ public class MqttService extends Service implements MqttSimpleCallback {
     @Override
     public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) throws Exception {
         String s = new String(payload);
-        Log.i("message", topicName+":"+s);
+        if (getHeartbeatTitle().equals(topicName)) {
+            heartBeat.receiveHeartBeat(s);
+            return;
+        }
+        Log.i("message", topicName + ":" + s);
         //show message in toast
         toastHandler.show(s);
         //call the implement of interface

@@ -19,6 +19,7 @@ public class MainActivity extends Activity implements MqttService.MCallback {
     Button stop;
     Button subscribe;
     Button unSubscribe;
+    Button send;
     EditText title;
     TextView display;
 
@@ -44,6 +45,7 @@ public class MainActivity extends Activity implements MqttService.MCallback {
         stop = (Button) findViewById(R.id.stop);
         subscribe = (Button) findViewById(R.id.subscribe);
         unSubscribe = (Button) findViewById(R.id.unSubscribe);
+        send = (Button) findViewById(R.id.send);
         title = (EditText) findViewById(R.id.title);
         display = (TextView) findViewById(R.id.display);
 
@@ -81,6 +83,14 @@ public class MainActivity extends Activity implements MqttService.MCallback {
             public void onClick(View v) {
                 if (receiveService != null)
                     receiveService.unScubscribe(title.getText().toString());
+            }
+        });
+
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (receiveService != null)
+                    receiveService.sendMessage("emergency",title.getText().toString());
             }
         });
     }

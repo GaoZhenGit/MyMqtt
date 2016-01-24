@@ -69,6 +69,7 @@ public class Log {
             try {
                 FileOutputStream fileOutputStream = new FileOutputStream(file,true);
                 fileOutputStream.write(stringBuilder.toString().getBytes());
+                fileOutputStream.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
