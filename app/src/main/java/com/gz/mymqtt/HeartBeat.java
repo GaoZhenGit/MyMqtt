@@ -2,6 +2,9 @@ package com.gz.mymqtt;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * auto maintain the long priod of connect
@@ -26,10 +29,14 @@ public class HeartBeat {
 
     private TimerTask heartBeatReceiver;
 
+    private ScheduledExecutorService executorService;
+
     private long lastHeatBeatTime;
 
     public HeartBeat(MqttService mqttService) {
         this.mqttService = mqttService;
+        executorService = new ScheduledThreadPoolExecutor(2);
+
         heartBeatSender = new TimerTask() {
             @Override
             public void run() {
@@ -39,23 +46,25 @@ public class HeartBeat {
                 Log.i("heartbeatsend", "" + sendTime);
             }
         };
-        sendTimer = new Timer();
-        sendTimer.schedule(heartBeatSender, HEARTBEAT_RATE * 1000, HEARTBEAT_RATE * 1000);
+//        sendTimer = new Timer();
+//        sendTimer.schedule(heartBeatSender, HEARTBEAT_RATE * 1000, HEARTBEAT_RATE * 1000);
+        executorService.scheduleAtFixedRate(heartBeatSender, HEARTBEAT_RATE, HEARTBEAT_RATE, TimeUnit.SECONDS);
 
         heartBeatReceiver = new TimerTask() {
             @Override
             public void run() {
-                double gap = System.currentTimeMillis() - lastHeatBeatTime;
+                long gap = System.currentTimeMillis() - lastHeatBeatTime;
                 Log.i("check", "" + gap);
                 if (gap > BARE_RATE * HEARTBEAT_RATE * 1000) {
-                    Log.i("heartbeat","time over");
+                    Log.i("heartbeat", "time over");
                     HeartBeat.this.mqttService.onStartCommand(null, 0, 0);
                     lastHeatBeatTime = System.currentTimeMillis();
                 }
             }
         };
-        receiveTimer = new Timer();
-        receiveTimer.schedule(heartBeatReceiver, 0, CHECK_HEART_RATE * 1000);
+//        receiveTimer = new Timer();
+//        receiveTimer.schedule(heartBeatReceiver, 0, CHECK_HEART_RATE * 1000);
+        executorService.scheduleAtFixedRate(heartBeatReceiver, 0, CHECK_HEART_RATE, TimeUnit.SECONDS);
 
         lastHeatBeatTime = System.currentTimeMillis();
     }
@@ -74,9 +83,10 @@ public class HeartBeat {
     }
 
     public void stop() {
-        sendTimer.cancel();
-        sendTimer = null;
-        receiveTimer.cancel();
-        receiveTimer = null;
+//        sendTimer.cancel();
+//        sendTimer = null;
+//        receiveTimer.cancel();
+//        receiveTimer = null;
+        executorService.shutdownNow();
     }
 }

@@ -1,10 +1,10 @@
 package com.gz.mymqtt;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -90,9 +90,19 @@ public class MainActivity extends Activity implements MqttService.MCallback {
             @Override
             public void onClick(View v) {
                 if (receiveService != null)
-                    receiveService.sendMessage("emergency",title.getText().toString(), 2);
+                    receiveService.sendMessage("emergency", title.getText().toString(), 2);
             }
         });
+    }
+
+    private boolean isServiceRunning() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (MqttService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

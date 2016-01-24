@@ -1,6 +1,9 @@
 package com.gz.mymqtt;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -8,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.widget.Toast;
@@ -60,6 +64,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
     private MCallback mCallback;
     //heartbeat util
     private HeartBeat heartBeat;
+    private PowerManager.WakeLock wakeLock;
 
 //    private MqttReconnectReceiver mqttReconnectReceiver;
 
@@ -76,6 +81,11 @@ public class MqttService extends Service implements MqttSimpleCallback {
 //        intentFilter.addAction("android.intent.action.TIME_TICK");
 //        mqttReconnectReceiver = new MqttReconnectReceiver();
 //        registerReceiver(mqttReconnectReceiver, intentFilter);
+
+//        Intent intent = new Intent("ELITOR_CLOCK");
+//        PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
+//        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+//        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,System.currentTimeMillis(),5*1000,pi);
     }
 
     @Override
@@ -104,6 +114,10 @@ public class MqttService extends Service implements MqttSimpleCallback {
                 }
             }
         }).start();
+        //hold the walklock
+        PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"com.task.TalkMessageService");
+        wakeLock.acquire();
         return START_STICKY;
     }
 
@@ -236,7 +250,11 @@ public class MqttService extends Service implements MqttSimpleCallback {
         } catch (MqttPersistenceException e) {
             e.printStackTrace();
         }
-//        unregisterReceiver(mqttReconnectReceiver);
+        //release the wakelock
+        if (wakeLock != null) {
+            wakeLock.release();
+            wakeLock = null;
+        }
         super.onDestroy();
     }
 
