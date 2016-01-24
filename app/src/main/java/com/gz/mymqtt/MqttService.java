@@ -116,7 +116,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         }).start();
         //hold the walklock
         PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"com.task.TalkMessageService");
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,MqttService.class.getName());
         wakeLock.acquire();
         return START_STICKY;
     }

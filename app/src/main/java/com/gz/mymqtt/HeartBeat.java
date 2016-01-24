@@ -27,7 +27,7 @@ public class HeartBeat {
 
     private TimerTask heartBeatSender;
 
-    private TimerTask heartBeatReceiver;
+    private TimerTask heartBeatChecker;
 
     private ScheduledExecutorService executorService;
 
@@ -35,8 +35,10 @@ public class HeartBeat {
 
     public HeartBeat(MqttService mqttService) {
         this.mqttService = mqttService;
-        executorService = new ScheduledThreadPoolExecutor(2);
 
+        lastHeatBeatTime = System.currentTimeMillis();
+
+        executorService = new ScheduledThreadPoolExecutor(2);
         heartBeatSender = new TimerTask() {
             @Override
             public void run() {
@@ -50,7 +52,7 @@ public class HeartBeat {
 //        sendTimer.schedule(heartBeatSender, HEARTBEAT_RATE * 1000, HEARTBEAT_RATE * 1000);
         executorService.scheduleAtFixedRate(heartBeatSender, HEARTBEAT_RATE, HEARTBEAT_RATE, TimeUnit.SECONDS);
 
-        heartBeatReceiver = new TimerTask() {
+        heartBeatChecker = new TimerTask() {
             @Override
             public void run() {
                 long gap = System.currentTimeMillis() - lastHeatBeatTime;
@@ -63,10 +65,8 @@ public class HeartBeat {
             }
         };
 //        receiveTimer = new Timer();
-//        receiveTimer.schedule(heartBeatReceiver, 0, CHECK_HEART_RATE * 1000);
-        executorService.scheduleAtFixedRate(heartBeatReceiver, 0, CHECK_HEART_RATE, TimeUnit.SECONDS);
-
-        lastHeatBeatTime = System.currentTimeMillis();
+//        receiveTimer.schedule(heartBeatChecker, 0, CHECK_HEART_RATE * 1000);
+        executorService.scheduleAtFixedRate(heartBeatChecker, 0, CHECK_HEART_RATE, TimeUnit.SECONDS);
     }
 
     //renew the last record time from received heart beat, if it is
