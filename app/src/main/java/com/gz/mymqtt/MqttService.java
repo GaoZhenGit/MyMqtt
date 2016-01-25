@@ -40,7 +40,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
     // clean start.
     private final static boolean MQTT_CLEAN_START = false;
     // heartbeat, pre second, now i dont use it because i make heartbeat myself
-    private final static short MQTT_KEEP_ALIVE = 60 * 30;
+    private final static short MQTT_KEEP_ALIVE = 60 * 60 * 2;
     //mqtt host url
     private final static String MQTT_HOST = "139.129.18.117";
     //mqtt host port, default 1883
@@ -108,15 +108,16 @@ public class MqttService extends Service implements MqttSimpleCallback {
                     recoverSub();
                 } catch (MqttException e) {
                     e.printStackTrace();
-                    Log.e("mqtt", "connect fail");
                     //renconnect if fail
-                    reConnectDelay();
+                    Log.e("mqtt", "connect fail");
+//                    reConnectDelay();
+                    heartBeat.setOverTimeFlag();
                 }
             }
         }).start();
         //hold the walklock
         PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,MqttService.class.getName());
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, MqttService.class.getName());
         wakeLock.acquire();
         return START_STICKY;
     }
@@ -142,6 +143,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
         mqttClient.registerSimpleHandler(this);
         Log.i("mqtt", "conneced!");
+        heartBeat.initHeartBeatRecord();
     }
 
     //in case of losing connection, this method help to reconnect of a delay
@@ -164,7 +166,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
             Log.i("resub", st);
         }
         try {
-            mqttClient.subscribe(new String[]{EMERGENCY_TITLE,getHeartbeatTitle()}, new int[]{2,2});
+            mqttClient.subscribe(new String[]{EMERGENCY_TITLE, getHeartbeatTitle()}, new int[]{2, 2});
             int[] qos = new int[s.length];
             for (int i = 0; i < qos.length; i++) {
                 qos[i] = 2;
@@ -235,7 +237,7 @@ public class MqttService extends Service implements MqttSimpleCallback {
         this.mCallback = mCallback;
     }
 
-    public String getHeartbeatTitle(){
+    public String getHeartbeatTitle() {
         return HEARTBEAT_TITLE + Settings.Secure.getString(this.getContentResolver(),
                 Settings.Secure.ANDROID_ID);
     }

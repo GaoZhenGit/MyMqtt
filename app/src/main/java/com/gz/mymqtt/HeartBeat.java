@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit;
  * Created by host on 2016/1/24.
  */
 public class HeartBeat {
-    public static final int HEARTBEAT_RATE = 30;
+    public static final int HEARTBEAT_RATE = 90;
 
-    public static final int CHECK_HEART_RATE = 5;
+    public static final int CHECK_HEART_RATE = 15;
 
     public static final double BARE_RATE = 1.5;
 
@@ -80,6 +80,16 @@ public class HeartBeat {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
+    }
+
+    public void initHeartBeatRecord() {
+        lastHeatBeatTime = System.currentTimeMillis();
+        Log.i("heartbeat", "init");
+    }
+
+    public void setOverTimeFlag() {
+        lastHeatBeatTime = System.currentTimeMillis()
+                - (long) BARE_RATE * HEARTBEAT_RATE * 2000;
     }
 
     public void stop() {
