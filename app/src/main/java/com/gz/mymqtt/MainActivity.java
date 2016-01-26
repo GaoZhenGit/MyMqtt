@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 
-public class MainActivity extends Activity implements MqttService.MCallback {
+public class MainActivity extends Activity implements MService.MCallback {
     Button start;
     Button stop;
     Button subscribe;
@@ -23,11 +23,11 @@ public class MainActivity extends Activity implements MqttService.MCallback {
     EditText title;
     TextView display;
 
-    MqttService receiveService;
+    MService receiveService;
     ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            receiveService = ((MqttService.ReceiveServiceBinder) service).getService();
+            receiveService = ((MService.ReceiveServiceBinder) service).getService();
             receiveService.setCallback(MainActivity.this);
         }
 
@@ -52,7 +52,7 @@ public class MainActivity extends Activity implements MqttService.MCallback {
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MqttService.class);
+                Intent intent = new Intent(getApplicationContext(), MService.class);
                 getApplicationContext().startService(intent);
                 getApplicationContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
             }
