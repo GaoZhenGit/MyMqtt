@@ -22,7 +22,7 @@ public class MReceiver extends BroadcastReceiver {
                 (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service :
                 manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (MqttService.class.getName().equals(service.service.getClassName())) {
+            if (MService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }

@@ -60,7 +60,7 @@ public class MainActivity extends Activity implements MService.MCallback {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MqttService.class);
+                Intent intent = new Intent(getApplicationContext(), MService.class);
                 try {
                     getApplicationContext().unbindService(serviceConnection);
                     getApplicationContext().stopService(intent);
@@ -98,7 +98,7 @@ public class MainActivity extends Activity implements MService.MCallback {
     private boolean isServiceRunning() {
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (MqttService.class.getName().equals(service.service.getClassName())) {
+            if (MService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }
