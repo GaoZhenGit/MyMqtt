@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.widget.Toast;
@@ -82,10 +83,10 @@ public class MqttService extends Service implements MqttSimpleCallback {
 //        mqttReconnectReceiver = new MqttReconnectReceiver();
 //        registerReceiver(mqttReconnectReceiver, intentFilter);
 
-//        Intent intent = new Intent("ELITOR_CLOCK");
-//        PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
-//        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-//        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,System.currentTimeMillis(),5*1000,pi);
+        Intent intent = new Intent(this,MqttReconnectReceiver.class);
+        PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,System.currentTimeMillis(),5*1000,pi);
     }
 
     @Override
@@ -297,6 +298,9 @@ public class MqttService extends Service implements MqttSimpleCallback {
         if (mCallback != null) {
             mCallback.arrived(topicName, s);
         }
+
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(500);
     }
 
 
