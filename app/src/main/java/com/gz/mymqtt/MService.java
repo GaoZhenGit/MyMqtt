@@ -39,6 +39,8 @@ public class MService extends Service implements MqttSimpleCallback {
 
     private int checkTime = SEND_CHECK_TIME;
 
+    private int failTime = 0;
+
 
     /**
      * ***********override method****************

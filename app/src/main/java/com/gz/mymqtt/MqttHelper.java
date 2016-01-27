@@ -46,10 +46,11 @@ public class MqttHelper {
                 try {
                     String mqttConnSpec = "tcp://" + MQTT_HOST + ":" + MQTT_PORT;
                     if (mqttClient == null) {
-                        mqttClient = MqttClient.createMqttClient(mqttConnSpec, null);
+//                        mqttClient = MqttClient.createMqttClient(mqttConnSpec, null);
                     } else {
                         Log.i("mqtt", "reconnected");
                     }
+                    mqttClient = MqttClient.createMqttClient(mqttConnSpec, null);
                     mqttClient.connect(deviceID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
                     Log.i("mqtt", "connected!");
                     reSub();
@@ -68,21 +69,17 @@ public class MqttHelper {
         connect(null);
     }
 
-    private void reSub() {
+    private void reSub() throws MqttException {
         List<String> ls = localTitles.getTitles();
         String[] s = ls.toArray(new String[ls.size()]);
+        mqttClient.subscribe(new String[]{EMERGENCY_TITLE, getHeartbeatTitle()}, new int[]{2, 2});
+        int[] qos = new int[s.length];
+        for (int i = 0; i < qos.length; i++) {
+            qos[i] = 2;
+        }
+        mqttClient.subscribe(s, qos);
         for (String st : s) {
             Log.i("resub", st);
-        }
-        try {
-            mqttClient.subscribe(new String[]{EMERGENCY_TITLE, getHeartbeatTitle()}, new int[]{2, 2});
-            int[] qos = new int[s.length];
-            for (int i = 0; i < qos.length; i++) {
-                qos[i] = 2;
-            }
-            mqttClient.subscribe(s, qos);
-        } catch (MqttException e) {
-            e.printStackTrace();
         }
     }
 
