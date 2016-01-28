@@ -121,7 +121,7 @@ public class MService extends Service implements MqttSimpleCallback {
         if (gap > BARE_RATE * CHECK_RATE * SEND_CHECK_TIME * 1000) {
             Log.i("heartbeat", "time over");
             onStartCommand(null, 0, 0);
-            lastHeatBeatTime = System.currentTimeMillis();
+//            lastHeatBeatTime = System.currentTimeMillis();
         }
     }
 
@@ -150,8 +150,8 @@ public class MService extends Service implements MqttSimpleCallback {
         mqttHelper.subScribe(topic, qos);
     }
 
-    public void unScubscribe(String topic) {
-        mqttHelper.unScubscribe(topic);
+    public void unSubscribe(String topic) {
+        mqttHelper.unSubscribe(topic);
     }
 
     public void sendMessage(String topic, String msg, int qos) {

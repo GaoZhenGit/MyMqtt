@@ -82,7 +82,7 @@ public class MainActivity extends Activity implements MService.MCallback {
             @Override
             public void onClick(View v) {
                 if (receiveService != null)
-                    receiveService.unScubscribe(title.getText().toString());
+                    receiveService.unSubscribe(title.getText().toString());
             }
         });
 

@@ -83,10 +83,14 @@ public class MqttHelper {
         }
     }
 
-    public void subScribe(String title, int qos) {
-        if (localTitles.getTitles().contains(title))
+    public void subScribe(String topic, int qos) {
+        subScribe(topic, qos, null);
+    }
+
+    public void subScribe(String topic, int qos, final ActionListener actionListener) {
+        if (localTitles.getTitles().contains(topic))
             return;
-        final String[] t = new String[]{title};
+        final String[] t = new String[]{topic};
         final int[] q = new int[]{qos};
         new Thread(new Runnable() {
             @Override
@@ -95,17 +99,25 @@ public class MqttHelper {
                     mqttClient.subscribe(t, q);
                     Log.i("mqtt", "sub " + t[0]);
                     localTitles.add(t[0]);
+                    if (actionListener != null)
+                        actionListener.success();
                 } catch (MqttException e) {
                     e.printStackTrace();
+                    if (actionListener != null)
+                        actionListener.fail(e);
                 }
             }
         }).start();
     }
 
-    public void unScubscribe(String title) {
-        if (!localTitles.getTitles().contains(title))
+    public void unSubscribe(String topic) {
+        unSubscribe(topic, null);
+    }
+
+    public void unSubscribe(String topic, final ActionListener actionListener) {
+        if (!localTitles.getTitles().contains(topic))
             return;
-        final String[] t = new String[]{title};
+        final String[] t = new String[]{topic};
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -113,26 +125,39 @@ public class MqttHelper {
                     mqttClient.unsubscribe(t);
                     Log.i("mqtt", "unsub");
                     localTitles.remove(t[0]);
+                    if (actionListener != null)
+                        actionListener.success();
                 } catch (MqttException e) {
                     e.printStackTrace();
+                    if (actionListener != null)
+                        actionListener.fail(e);
                 }
             }
         }).start();
     }
 
-    public void sendMessage(String title, String message, final int qos) {
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(message)) {
+    public void sendMessage(String topic, String message, final int qos) {
+        sendMessage(topic, message, qos, null);
+    }
+
+    public void sendMessage(String topic, String message, final int qos, final ActionListener actionListener) {
+        if (TextUtils.isEmpty(topic) || TextUtils.isEmpty(message)) {
             return;
         }
-        final String t = title;
+        final String t = topic;
         final String m = message;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     mqttClient.publish(t, m.getBytes(), qos, false);
+                    if (actionListener != null)
+                        actionListener.success();
                 } catch (MqttException e) {
                     e.printStackTrace();
+                    Log.getStackTraceString(e);
+                    if (actionListener != null)
+                        actionListener.fail(e);
                 }
             }
         }).start();

@@ -8,6 +8,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.UnknownHostException;
 import java.util.Calendar;
 
 /**
@@ -38,6 +41,24 @@ public class Log {
             return;
         android.util.Log.d(tag, info);
         writeInFile(tag, info);
+    }
+
+    public static void getStackTraceString(Throwable tr) {
+        if (!PRINT)
+            return;
+        Throwable t = tr;
+        while (t != null) {
+            if (t instanceof UnknownHostException) {
+                return;
+            }
+            t = t.getCause();
+        }
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        tr.printStackTrace(pw);
+        pw.flush();
+        writeInFile("exception",sw.toString());
     }
 
     private static void writeInFile(String tag, String info) {
