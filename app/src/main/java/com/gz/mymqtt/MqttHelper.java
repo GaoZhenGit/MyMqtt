@@ -57,7 +57,7 @@ public class MqttHelper {
                     if (actionListener != null)
                         actionListener.success();
                 } catch (MqttException e) {
-                    Log.i("mqtt", "connect fail");
+                    Log.e("mqtt", "connect fail");
                     if (actionListener != null)
                         actionListener.fail(e);
                 }

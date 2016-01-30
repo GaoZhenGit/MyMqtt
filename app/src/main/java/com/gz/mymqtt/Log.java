@@ -20,7 +20,9 @@ import java.util.Calendar;
  * Created by host on 2016/1/23.
  */
 public class Log {
-    public static final boolean PRINT = true;
+    public static final boolean PRINT = false;
+
+    public static final boolean ERROR_ONLY = true;
 
     public static void i(String tag, String info) {
         if (!PRINT)
@@ -30,7 +32,7 @@ public class Log {
     }
 
     public static void e(String tag, String info) {
-        if (!PRINT)
+        if (!PRINT && !ERROR_ONLY)
             return;
         android.util.Log.e(tag, info);
         writeInFile(tag, info);
@@ -44,7 +46,7 @@ public class Log {
     }
 
     public static void getStackTraceString(Throwable tr) {
-        if (!PRINT)
+        if (!PRINT && !ERROR_ONLY)
             return;
         Throwable t = tr;
         while (t != null) {
@@ -58,16 +60,16 @@ public class Log {
         PrintWriter pw = new PrintWriter(sw);
         tr.printStackTrace(pw);
         pw.flush();
-        writeInFile("exception",sw.toString());
+        writeInFile("exception", sw.toString());
     }
 
     private static void writeInFile(String tag, String info) {
         Calendar calendar = Calendar.getInstance();
-        String year = calendar.get(Calendar.YEAR)+"-";
-        String month = calendar.get(Calendar.MONTH) + 1+"-";
-        String day = calendar.get(Calendar.DAY_OF_MONTH)+"-";
-        String hour = calendar.get(Calendar.HOUR_OF_DAY)+":";
-        String minute = calendar.get(Calendar.MINUTE)+":";
+        String year = calendar.get(Calendar.YEAR) + "-";
+        String month = calendar.get(Calendar.MONTH) + 1 + "-";
+        String day = calendar.get(Calendar.DAY_OF_MONTH) + "-";
+        String hour = calendar.get(Calendar.HOUR_OF_DAY) + ":";
+        String minute = calendar.get(Calendar.MINUTE) + ":";
         int second = calendar.get(Calendar.SECOND);
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(year).append(month).append(day)
@@ -78,7 +80,7 @@ public class Log {
                 .equals(android.os.Environment.MEDIA_MOUNTED); //判断sd卡是否存在
         if (sdCardExist) {
             sdDir = Environment.getExternalStorageDirectory();//获取跟目录
-            String fileName =sdDir.getAbsolutePath() + "/MyMqtt.txt";
+            String fileName = sdDir.getAbsolutePath() + "/MyMqtt.txt";
             File file = new File(fileName);
             if (!file.exists()) {
                 try {
@@ -88,7 +90,7 @@ public class Log {
                 }
             }
             try {
-                FileOutputStream fileOutputStream = new FileOutputStream(file,true);
+                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
                 fileOutputStream.write(stringBuilder.toString().getBytes());
                 fileOutputStream.close();
             } catch (FileNotFoundException e) {

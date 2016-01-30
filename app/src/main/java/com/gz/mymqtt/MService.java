@@ -111,7 +111,17 @@ public class MService extends Service implements MqttSimpleCallback {
     private void sendHeartBeat() {
         String heartBeatTitle = mqttHelper.getHeartbeatTitle();
         String sendTime = System.currentTimeMillis() + "";
-        mqttHelper.sendMessage(heartBeatTitle, sendTime, 2);
+        mqttHelper.sendMessage(heartBeatTitle, sendTime, 2, new MqttHelper.ActionListener() {
+            @Override
+            public void success() {
+
+            }
+
+            @Override
+            public void fail(Exception e) {
+                setOverTime();
+            }
+        });
         Log.i("heartbeatsend", "" + sendTime);
     }
 
@@ -119,7 +129,7 @@ public class MService extends Service implements MqttSimpleCallback {
         long gap = System.currentTimeMillis() - lastHeatBeatTime;
         Log.i("check", "" + gap);
         if (gap > BARE_RATE * CHECK_RATE * SEND_CHECK_TIME * 1000) {
-            Log.i("heartbeat", "time over");
+            Log.e("heartbeat", "time over");
             onStartCommand(null, 0, 0);
 //            lastHeatBeatTime = System.currentTimeMillis();
         }
@@ -168,7 +178,7 @@ public class MService extends Service implements MqttSimpleCallback {
 
     @Override
     public void connectionLost() throws Exception {
-        Log.i("mqtt","connetion lost");
+        Log.e("mqtt","connetion lost");
         setOverTime();
     }
 
