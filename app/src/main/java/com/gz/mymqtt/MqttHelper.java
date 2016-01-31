@@ -153,7 +153,7 @@ public class MqttHelper {
                     mqttClient.publish(t, m.getBytes(), qos, false);
                     if (actionListener != null)
                         actionListener.success();
-                } catch (MqttException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     Log.getStackTraceString(e);
                     if (actionListener != null)

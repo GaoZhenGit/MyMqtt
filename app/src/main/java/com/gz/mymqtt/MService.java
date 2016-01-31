@@ -75,8 +75,7 @@ public class MService extends Service implements MqttSimpleCallback {
                 break;
             case -1:
             default:
-                if (mqttHelper == null)
-                    mqttHelper = new MqttHelper(this);
+                mqttHelper = new MqttHelper(this);
                 mqttHelper.connect(new MqttHelper.ActionListener() {
                     @Override
                     public void success() {
