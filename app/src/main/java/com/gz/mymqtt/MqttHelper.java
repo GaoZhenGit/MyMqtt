@@ -2,41 +2,42 @@ package com.gz.mymqtt;
 
 import android.content.Context;
 import android.provider.Settings;
-import android.text.TextUtils;
 
-import com.ibm.mqtt.IMqttClient;
-import com.ibm.mqtt.MqttClient;
-import com.ibm.mqtt.MqttException;
-import com.ibm.mqtt.MqttSimpleCallback;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.util.List;
 
 /**
- * Created by host on 2016/1/26.
+ * Created by host on 2016/1/31.
  */
-public class MqttHelper {
+public class MqttHelper implements MqttCallback {
 
-    private final static boolean MQTT_CLEAN_START = false;
-    // heartbeat, pre second, now i dont use it because i make heartbeat myself
-    private final static short MQTT_KEEP_ALIVE = 60 * 60 * 2;
-    //mqtt host url
-    private final static String MQTT_HOST = "139.129.18.117";
-    //mqtt host port, default 1883
-    private final static int MQTT_PORT = 1883;
+    public static final String HOST = "139.129.18.117";
+
+    public static final int PORT = 1883;
+
+    private static final String URL = "tcp://" + HOST + ":" + PORT;
+
+    public static String DEVICE_ID;
+
     //emergency title, always subscribe
     private final static String EMERGENCY_TITLE = "emergency";
     //the title of only self sub, for heartbeat, will add the device id before
     private final static String HEARTBEAT_TITLE = "heartbeat";
 
-    private IMqttClient mqttClient;
+    private MqttClient mqttClient;
 
     private LocalTitles localTitles;
 
-    private String deviceID;
-
     public MqttHelper(Context context) {
         localTitles = new LocalTitles(context);
-        deviceID = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        DEVICE_ID = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     public void connect(final ActionListener actionListener) {
@@ -44,20 +45,21 @@ public class MqttHelper {
             @Override
             public void run() {
                 try {
-                    String mqttConnSpec = "tcp://" + MQTT_HOST + ":" + MQTT_PORT;
+                    MemoryPersistence memoryPersistence = new MemoryPersistence();
                     if (mqttClient == null) {
-//                        mqttClient = MqttClient.createMqttClient(mqttConnSpec, null);
-                    } else {
-                        Log.i("mqtt", "reconnected");
+                        mqttClient = new MqttClient(URL, DEVICE_ID, memoryPersistence);
                     }
-                    mqttClient = MqttClient.createMqttClient(mqttConnSpec, null);
-                    mqttClient.connect(deviceID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
-                    Log.i("mqtt", "connected!");
+                    MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+                    mqttConnectOptions.setCleanSession(false);
+                    mqttConnectOptions.setKeepAliveInterval(60 * 60);
+                    mqttClient.connect(mqttConnectOptions);
+                    android.util.Log.i("paho", "connect");
                     reSub();
                     if (actionListener != null)
                         actionListener.success();
-                } catch (MqttException e) {
-                    Log.e("mqtt", "connect fail");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.i("paho", "connect fail");
                     if (actionListener != null)
                         actionListener.fail(e);
                 }
@@ -72,36 +74,52 @@ public class MqttHelper {
     private void reSub() throws MqttException {
         List<String> ls = localTitles.getTitles();
         String[] s = ls.toArray(new String[ls.size()]);
-        mqttClient.subscribe(new String[]{EMERGENCY_TITLE, getHeartbeatTitle()}, new int[]{2, 2});
-        int[] qos = new int[s.length];
-        for (int i = 0; i < qos.length; i++) {
-            qos[i] = 2;
-        }
-        mqttClient.subscribe(s, qos);
+        mqttClient.subscribe(EMERGENCY_TITLE, 2);
+        mqttClient.subscribe(getHeartbeatTitle(), 2);
+//        int[] qos = new int[s.length];
+//        for (int i = 0; i < qos.length; i++) {
+//            qos[i] = 2;
+//        }
+//        mqttClient.subscribe(s, qos);
         for (String st : s) {
+            mqttClient.subscribe(st, 2);
             Log.i("resub", st);
         }
     }
 
-    public void subScribe(String topic, int qos) {
-        subScribe(topic, qos, null);
-    }
-
-    public void subScribe(String topic, int qos, final ActionListener actionListener) {
-        if (localTitles.getTitles().contains(topic))
-            return;
-        final String[] t = new String[]{topic};
-        final int[] q = new int[]{qos};
+    public void subscribe(final String topic, final int qos, final ActionListener actionListener) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    mqttClient.subscribe(t, q);
-                    Log.i("mqtt", "sub " + t[0]);
-                    localTitles.add(t[0]);
+                    mqttClient.subscribe(topic, qos);
+                    Log.i("mqtt", "sub " + topic);
+                    localTitles.add(topic);
                     if (actionListener != null)
                         actionListener.success();
-                } catch (MqttException e) {
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (actionListener != null)
+                        actionListener.fail(e);
+                }
+            }
+        }).start();
+    }
+
+    public void subscribe(String topic, int qos) {
+        subscribe(topic, qos, null);
+    }
+
+    public void unSubscribe(final String topic, final ActionListener actionListener) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mqttClient.unsubscribe(topic);
+                    Log.i("mqtt", "unsub " + topic);
+                    if (actionListener != null)
+                        actionListener.success();
+                } catch (Exception e) {
                     e.printStackTrace();
                     if (actionListener != null)
                         actionListener.fail(e);
@@ -114,61 +132,55 @@ public class MqttHelper {
         unSubscribe(topic, null);
     }
 
-    public void unSubscribe(String topic, final ActionListener actionListener) {
-        if (!localTitles.getTitles().contains(topic))
-            return;
-        final String[] t = new String[]{topic};
+    public void sendMessage(final String topic, final String message,
+                            final int qos, final ActionListener actionListener) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    mqttClient.unsubscribe(t);
-                    Log.i("mqtt", "unsub");
-                    localTitles.remove(t[0]);
-                    if (actionListener != null)
-                        actionListener.success();
-                } catch (MqttException e) {
-                    e.printStackTrace();
-                    if (actionListener != null)
-                        actionListener.fail(e);
-                }
-            }
-        }).start();
-    }
+                    MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+                    mqttMessage.setQos(qos);
 
-    public void sendMessage(String topic, String message, final int qos) {
-        sendMessage(topic, message, qos, null);
-    }
-
-    public void sendMessage(String topic, String message, final int qos, final ActionListener actionListener) {
-        if (TextUtils.isEmpty(topic) || TextUtils.isEmpty(message)) {
-            return;
-        }
-        final String t = topic;
-        final String m = message;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    mqttClient.publish(t, m.getBytes(), qos, false);
+                    mqttClient.publish(topic, mqttMessage);
                     if (actionListener != null)
                         actionListener.success();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.getStackTraceString(e);
                     if (actionListener != null)
                         actionListener.fail(e);
                 }
+
             }
         }).start();
     }
 
-    public void setMqttSimpleCallback(MqttSimpleCallback mqttSimpleCallback) {
-        mqttClient.registerSimpleHandler(mqttSimpleCallback);
+    public void sendMessage(String topic, String message, int qos) {
+        sendMessage(topic, message, qos, null);
+    }
+
+    public void setMqttCallback(MqttCallback mqttCallback) {
+        mqttClient.setCallback(mqttCallback);
     }
 
     public String getHeartbeatTitle() {
-        return HEARTBEAT_TITLE + deviceID;
+        return HEARTBEAT_TITLE + DEVICE_ID;
+    }
+
+
+    @Override
+    public void connectionLost(Throwable throwable) {
+        Log.e("paho", "connection lost");
+        throwable.printStackTrace();
+    }
+
+    @Override
+    public void messageArrived(String topic, MqttMessage message) throws Exception {
+        Log.i("message", topic + ":" + message.toString());
+    }
+
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
     }
 
     public interface ActionListener {

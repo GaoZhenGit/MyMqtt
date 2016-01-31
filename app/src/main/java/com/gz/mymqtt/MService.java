@@ -13,12 +13,15 @@ import android.os.Message;
 import android.os.Vibrator;
 import android.widget.Toast;
 
-import com.ibm.mqtt.MqttSimpleCallback;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 /**
  * Created by host on 2016/1/26.
  */
-public class MService extends Service implements MqttSimpleCallback {
+public class MService extends Service implements MqttCallback {
 
     public static final int CHECK_RATE = 15;
 
@@ -75,12 +78,12 @@ public class MService extends Service implements MqttSimpleCallback {
                 break;
             case -1:
             default:
-                mqttHelper = new MqttHelper(this);
+                mqttHelper = new MqttHelper(getApplicationContext());
                 mqttHelper.connect(new MqttHelper.ActionListener() {
                     @Override
                     public void success() {
                         lastHeatBeatTime = System.currentTimeMillis();
-                        mqttHelper.setMqttSimpleCallback(MService.this);
+                        mqttHelper.setMqttCallback(MService.this);
                     }
 
                     @Override
@@ -156,7 +159,7 @@ public class MService extends Service implements MqttSimpleCallback {
     }
 
     public void subscribe(String topic, int qos) {
-        mqttHelper.subScribe(topic, qos);
+        mqttHelper.subscribe(topic, qos);
     }
 
     public void unSubscribe(String topic) {
@@ -176,14 +179,15 @@ public class MService extends Service implements MqttSimpleCallback {
     }
 
     @Override
-    public void connectionLost() throws Exception {
-        Log.e("mqtt","connetion lost");
+    public void connectionLost(Throwable throwable) {
+//        throwable.printStackTrace();
+        Log.e("paho","connetion lost");
         setOverTime();
     }
 
     @Override
-    public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) throws Exception {
-        String s = new String(payload);
+    public void messageArrived(String topicName, MqttMessage mqttMessage) throws Exception {
+        String s = mqttMessage.toString();
         if (mqttHelper.getHeartbeatTitle().equals(topicName)) {
             receiveHeartBeat(s);
             return;
@@ -198,6 +202,11 @@ public class MService extends Service implements MqttSimpleCallback {
 
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         vibrator.vibrate(500);
+    }
+
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
     }
 
 

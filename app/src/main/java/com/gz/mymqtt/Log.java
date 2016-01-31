@@ -20,7 +20,7 @@ import java.util.Calendar;
  * Created by host on 2016/1/23.
  */
 public class Log {
-    public static final boolean PRINT = false;
+    public static final boolean PRINT = true;
 
     public static final boolean ERROR_ONLY = true;
 

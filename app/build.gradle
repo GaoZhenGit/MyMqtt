@@ -23,4 +23,5 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:23.0.1'
     compile files('libs/wmqtt.jar')
+    compile files('libs/org.eclipse.paho.client.mqttv3-1.0.2.jar')
 }
