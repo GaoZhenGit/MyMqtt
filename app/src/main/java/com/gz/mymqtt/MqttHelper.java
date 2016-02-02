@@ -35,9 +35,17 @@ public class MqttHelper implements MqttCallback {
 
     private LocalTitles localTitles;
 
+    private MemoryPersistence memoryPersistence;
+
     public MqttHelper(Context context) {
         localTitles = new LocalTitles(context);
         DEVICE_ID = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
+
+    public MqttHelper(Context context, String userID) {
+        localTitles = new LocalTitles(context);
+        DEVICE_ID = userID;
+        memoryPersistence = new MemoryPersistence();
     }
 
     public void connect(final ActionListener actionListener) {
@@ -45,15 +53,16 @@ public class MqttHelper implements MqttCallback {
             @Override
             public void run() {
                 try {
-                    MemoryPersistence memoryPersistence = new MemoryPersistence();
                     if (mqttClient == null) {
                         mqttClient = new MqttClient(URL, DEVICE_ID, memoryPersistence);
+                    } else {
+                        mqttClient.setCallback(null);
                     }
                     MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
                     mqttConnectOptions.setCleanSession(false);
-                    mqttConnectOptions.setKeepAliveInterval(60 * 60);
+                    mqttConnectOptions.setKeepAliveInterval(3*60);
                     mqttClient.connect(mqttConnectOptions);
-                    android.util.Log.i("paho", "connect");
+                    Log.i("paho", "connect");
                     reSub();
                     if (actionListener != null)
                         actionListener.success();

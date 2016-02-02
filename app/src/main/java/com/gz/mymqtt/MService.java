@@ -180,7 +180,7 @@ public class MService extends Service implements MqttCallback {
 
     @Override
     public void connectionLost(Throwable throwable) {
-//        throwable.printStackTrace();
+        throwable.printStackTrace();
         Log.e("paho","connetion lost");
         setOverTime();
     }
